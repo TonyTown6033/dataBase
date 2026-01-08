@@ -1,5 +1,6 @@
 package com.database.user;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,6 +11,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(summary = "创建用户", description = "创建一个用户并返回用户信息")
     @PostMapping("/users")
     public User createUser(@Valid @RequestBody UserDTO.CreateReq user){
         return userService.create(user);
