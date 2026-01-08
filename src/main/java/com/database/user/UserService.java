@@ -21,7 +21,15 @@ public class UserService {
     public User getById(long id) {
         User u = userMapper.findById(id);
         if (u == null){
-            throw new NotFoundException("user not found" + id);
+            throw new NotFoundException("user not found, id is " + id);
+        }
+        return u;
+    }
+
+    public User getByUsername(String username) {
+        User u = userMapper.findByUsername(username);
+        if (u == null){
+            throw new NotFoundException("user not found, user name is " + username);
         }
         return u;
     }
