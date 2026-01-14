@@ -6,5 +6,5 @@ public record UserPageResponse(
         int page,
         int size,
         long total,
-        List<User> items
+        List<UserDTO.UserResp> items
 ) {}

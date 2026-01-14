@@ -57,9 +57,10 @@ class UserControllerTest {
 
     @Test
     void createUser_success() throws Exception {
-        var body = new UserDTO.CreateReq(
-                "TestUser",
-                "testuser@example.com"
+        var body = Map.of(
+                "name", "TestUser",
+                "email", "testuser@example.com",
+                "password", "password123"
         );
 
         mockMvc.perform(
@@ -74,9 +75,10 @@ class UserControllerTest {
     }
     @Test
     void createUser_validationFail() throws Exception {
-        var body = new UserDTO.CreateReq(
-                "",
-                "not-an-email"
+        var body = Map.of(
+                "name", "",
+                "email", "not-an-email",
+                "password", "password123"
         );
 
         mockMvc.perform(
@@ -85,6 +87,50 @@ class UserControllerTest {
                                 .content(objectMapper.writeValueAsString(body))
                 )
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createUser_passwordMissing_validationFail() throws Exception {
+        var body = Map.of(
+                "name", "TestUser",
+                "email", "testuser@example.com"
+        );
+
+        mockMvc.perform(
+                        post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(body))
+                )
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createUser_passwordHashed_andNotReturned() throws Exception {
+        String rawPassword = "password123";
+        var body = Map.of(
+                "name", "TestUser",
+                "email", "testuser@example.com",
+                "password", rawPassword
+        );
+
+        mockMvc.perform(
+                        post("/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(body))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.password_hash").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist());
+
+        String storedHash = jdbcTemplate.queryForObject(
+                "SELECT password_hash FROM users WHERE email = ?",
+                String.class,
+                "testuser@example.com"
+        );
+
+        org.junit.jupiter.api.Assertions.assertNotNull(storedHash);
+        org.junit.jupiter.api.Assertions.assertNotEquals(rawPassword, storedHash);
+        org.junit.jupiter.api.Assertions.assertTrue(passwordEncoder.matches(rawPassword, storedHash));
     }
 
     String loginAndGetToken() throws Exception {

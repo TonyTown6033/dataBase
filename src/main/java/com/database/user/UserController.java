@@ -13,17 +13,17 @@ public class UserController {
 
     @Operation(summary = "创建用户", description = "创建一个用户并返回用户信息")
     @PostMapping("/users")
-    public User createUser(@Valid @RequestBody UserDTO.CreateReq user){
+    public UserDTO.UserResp createUser(@Valid @RequestBody UserDTO.CreateReq user){
         return userService.create(user);
     }
 
     @GetMapping("/users/{id}")
-    public User getUser(@PathVariable Long id){
+    public UserDTO.UserResp getUser(@PathVariable Long id){
         return userService.getById(id);
     }
 
     @PutMapping("/users/{id}")
-    public User updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO.UpdateReq user) {
+    public UserDTO.UserResp updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO.UpdateReq user) {
         return userService.update(id, user);
     }
 
