@@ -1,31 +1,43 @@
 package com.database.user;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService {
-    private UserMapper userMapper;
+    private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserMapper userMapper) {
+    public UserService(UserMapper userMapper,  PasswordEncoder passwordEncoder) {
+
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public User create(UserDTO.CreateReq req) {
+    public UserDTO.UserResp create(UserDTO.CreateReq req) {
         User u = new User();
         u.setName(req.name());
         u.setEmail(req.email());
+
+        String hashedPassword = passwordEncoder.encode(req.password());
+        u.setPassword_hash(hashedPassword);
+
         userMapper.insert(u);
-        return u;
+        return toResp(u);
     }
 
-    public User getById(long id) {
+    public UserDTO.UserResp getById(long id) {
         User u = userMapper.findById(id);
         if (u == null){
             throw new NotFoundException("user not found, id is " + id);
         }
-        return u;
+        return toResp(u);
     }
 
+
+    // 这个方法会暴露 password_hash 用于鉴权
     public User getByUsername(String username) {
         User u = userMapper.findByUsername(username);
         if (u == null){
@@ -34,7 +46,7 @@ public class UserService {
         return u;
     }
 
-    public User update(Long id, UserDTO.UpdateReq req) {
+    public UserDTO.UserResp update(Long id, UserDTO.UpdateReq req) {
         User u = new User();
         u.setId(id);
         u.setName(req.name());
@@ -61,8 +73,15 @@ public class UserService {
 
         int offset = (page - 1) * size;
         long total = userMapper.count();
-        var items = userMapper.page(size, offset);
+        List<UserDTO.UserResp> items = userMapper.page(size, offset)
+                .stream()
+                .map(this::toResp)
+                .toList();
 
         return new UserPageResponse(page, size, total, items);
+    }
+
+    private UserDTO.UserResp toResp(User u) {
+        return new UserDTO.UserResp(u.getId(), u.getName(), u.getEmail(), u.getUsername());
     }
 }

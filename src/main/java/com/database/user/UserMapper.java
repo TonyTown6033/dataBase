@@ -16,7 +16,7 @@ public interface UserMapper {
     """)
     User findByUsername(@Param("username") String username);
 
-    @Insert("INSERT INTO users(name,email) VALUES (#{name}, #{email})")
+    @Insert("INSERT INTO users(name,email,password_hash) VALUES (#{name}, #{email}, #{password_hash})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(User user);
 
@@ -29,7 +29,7 @@ public interface UserMapper {
     @Select("""
         SELECT id, name, email
         FROM users
-        ORDER BY id DESC 
+        ORDER BY id DESC
         LIMIT #{limit} OFFSET #{offset}
     """)
     List<User> page(@Param("limit") int limit, @Param("offset") int offset);
