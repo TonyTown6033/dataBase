@@ -9,6 +9,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: demo_test
+          MYSQL_ROOT_PASSWORD: root123456
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -p$MYSQL_ROOT_PASSWORD"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,4 +34,6 @@ jobs:
           cache: maven
 
       - name: Run tests
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: ./mvnw -q -DskipTests=false test
