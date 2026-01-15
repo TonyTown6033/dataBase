@@ -38,7 +38,7 @@ class UserControllerTest {
     @BeforeEach
     void setUp() {
         // 清理测试数据
-        jdbcTemplate.update("DELETE FROM users WHERE username = ?", "testadmin");
+        jdbcTemplate.update("DELETE FROM users WHERE name = ?", "TestAdmin");
         jdbcTemplate.update("DELETE FROM users WHERE email = ?", "testuser@example.com");
         
         // 使用 PasswordEncoder 生成正确的密码哈希
@@ -46,12 +46,12 @@ class UserControllerTest {
         
         // 插入登录测试用户
         jdbcTemplate.update(
-                "INSERT INTO users (name, email, username, password_hash) VALUES (?, ?, ?, ?)",
-                "TestAdmin", "testadmin@example.com", "testadmin", encodedPassword
+                "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+                "TestAdmin", "testadmin@example.com", encodedPassword
         );
         // 获取插入用户的 ID
         testUserId = jdbcTemplate.queryForObject(
-                "SELECT id FROM users WHERE username = ?", Long.class, "testadmin"
+                "SELECT id FROM users WHERE name = ?", Long.class, "TestAdmin"
         );
     }
 
@@ -134,7 +134,7 @@ class UserControllerTest {
     }
 
     String loginAndGetToken() throws Exception {
-        var body = Map.of("username", "testadmin", "password", "123456");
+        var body = Map.of("name", "TestAdmin", "password", "123456");
 
         String resp = mockMvc.perform(
                         post("/auth/login")
@@ -146,7 +146,7 @@ class UserControllerTest {
                 .getResponse()
                 .getContentAsString();
 
-        return objectMapper.readTree(resp).get("token").asText();
+        return objectMapper.readTree(resp).path("data").asText();
     }
 
     @Test
@@ -160,6 +160,45 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(testUserId.intValue()))
                 .andExpect(jsonPath("$.name").value("TestAdmin"));
+    }
+
+    @Test
+    void getUser_notFound_returnsErrorEnvelope() throws Exception {
+        String token = loginAndGetToken();
+        Long maxId = jdbcTemplate.queryForObject("SELECT MAX(id) FROM users", Long.class);
+        long missingId = (maxId == null ? 1L : maxId + 1000);
+
+        mockMvc.perform(
+                        get("/users/" + missingId)
+                                .header("Authorization", "Bearer " + token)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void getUser_withoutJwt_unauthorized() throws Exception {
+        mockMvc.perform(get("/users/" + testUserId))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void deleteUser_withJwt_success() throws Exception {
+        String token = loginAndGetToken();
+
+        mockMvc.perform(
+                        delete("/users/" + testUserId)
+                                .header("Authorization", "Bearer " + token)
+                )
+                .andExpect(status().isOk());
+
+        Integer count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM users WHERE id = ?",
+                Integer.class,
+                testUserId
+        );
+        org.junit.jupiter.api.Assertions.assertEquals(0, count);
     }
 
 

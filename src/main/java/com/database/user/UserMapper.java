@@ -6,17 +6,17 @@ import java.util.List;
 
 @Mapper
 public interface UserMapper {
-    @Select("SELECT id, name ,email FROM users WHERE id = #{id}")
+    @Select("SELECT id, name, email FROM users WHERE id = #{id}")
     User findById(Long id);
 
     @Select("""
-        SELECT id, username, password_hash
+        SELECT id, name, password_hash
         FROM users
-        WHERE username = #{username}
+        WHERE name = #{name}
     """)
-    User findByUsername(@Param("username") String username);
+    User findByName(@Param("name") String name);
 
-    @Insert("INSERT INTO users(name,email,password_hash) VALUES (#{name}, #{email}, #{password_hash})")
+    @Insert("INSERT INTO users(name, email, password_hash) VALUES (#{name}, #{email}, #{password_hash})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(User user);
 

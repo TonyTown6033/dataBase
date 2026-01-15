@@ -38,10 +38,10 @@ public class UserService {
 
 
     // 这个方法会暴露 password_hash 用于鉴权
-    public User getByUsername(String username) {
-        User u = userMapper.findByUsername(username);
+    public User getByName(String name) {
+        User u = userMapper.findByName(name);
         if (u == null){
-            throw new NotFoundException("user not found, user name is " + username);
+            throw new NotFoundException("user not found, name is " + name);
         }
         return u;
     }
@@ -82,6 +82,6 @@ public class UserService {
     }
 
     private UserDTO.UserResp toResp(User u) {
-        return new UserDTO.UserResp(u.getId(), u.getName(), u.getEmail(), u.getUsername());
+        return new UserDTO.UserResp(u.getId(), u.getName(), u.getEmail());
     }
 }

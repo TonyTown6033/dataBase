@@ -24,11 +24,11 @@ public class JwtService {
         this.expireSeconds = expireSeconds;
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String name) {
         Instant now = Instant.now();
         return JWT.create()
                 .withIssuer(issuer)
-                .withSubject(username)
+                .withSubject(name)
                 .withIssuedAt(now)
                 .withExpiresAt(now.plusSeconds(expireSeconds))
                 .sign(alg);

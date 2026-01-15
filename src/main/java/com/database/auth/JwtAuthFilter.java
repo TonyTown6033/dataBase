@@ -33,9 +33,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = header.substring("Bearer ".length());
             try {
                 var jwt = jwtService.verify(token);
-                String username = jwt.getSubject();
+                String name = jwt.getSubject();
                 var auth = new UsernamePasswordAuthenticationToken(
-                        username,
+                        name,
                         null,
                         List.of(new SimpleGrantedAuthority("ROLE_USER"))
                 );

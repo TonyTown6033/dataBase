@@ -21,7 +21,6 @@ public class UserDTO {
     public record UserResp (
         Long id,
         String name,
-        String email,
-        String username
+        String email
     ) {}
 }

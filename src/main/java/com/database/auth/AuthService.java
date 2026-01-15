@@ -19,12 +19,12 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public String login(String username, String password) {
-        User u = userService.getByUsername(username);
+    public String login(String name, String password) {
+        User u = userService.getByName(name);
         if (u == null || !passwordEncoder.matches(password, u.getPassword_hash())){
-            throw new UnauthorizedException("Invalid username or password");
+            throw new UnauthorizedException("Invalid name or password");
         }
-        return jwtService.generateToken(username);
+        return jwtService.generateToken(name);
 
     }
 
