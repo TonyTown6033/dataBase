@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
 
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -69,9 +70,11 @@ class UserControllerTest {
                                 .content(objectMapper.writeValueAsString(body))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.name").value("TestUser"))
-                .andExpect(jsonPath("$.email").value("testuser@example.com"));
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.message").value("success"))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.name").value("TestUser"))
+                .andExpect(jsonPath("$.data.email").value("testuser@example.com"));
     }
     @Test
     void createUser_validationFail() throws Exception {
@@ -86,7 +89,9 @@ class UserControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(body))
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(not(0)))
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
     @Test
@@ -101,7 +106,9 @@ class UserControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(body))
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(not(0)))
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
     @Test
@@ -119,8 +126,9 @@ class UserControllerTest {
                                 .content(objectMapper.writeValueAsString(body))
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.password_hash").doesNotExist())
-                .andExpect(jsonPath("$.password").doesNotExist());
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.password_hash").doesNotExist())
+                .andExpect(jsonPath("$.data.password").doesNotExist());
 
         String storedHash = jdbcTemplate.queryForObject(
                 "SELECT password_hash FROM users WHERE email = ?",
@@ -142,11 +150,12 @@ class UserControllerTest {
                                 .content(objectMapper.writeValueAsString(body))
                 )
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        return objectMapper.readTree(resp).get("token").asText();
+        return objectMapper.readTree(resp).path("data").path("token").asText();
     }
 
     @Test
@@ -158,8 +167,9 @@ class UserControllerTest {
                                 .header("Authorization", "Bearer " + token)
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(testUserId.intValue()))
-                .andExpect(jsonPath("$.name").value("TestAdmin"));
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.id").value(testUserId.intValue()))
+                .andExpect(jsonPath("$.data.name").value("TestAdmin"));
     }
 
 
